@@ -26,10 +26,7 @@ class Config(BaseSettings):
 
     def get_db_url(self):
         return (
-            f"postgresql+asyncpg://"
-            f"{self.db.user}:{self.db.password}@"
-            f"{self.db.host}:{self.db.port}/"
-            f"{self.db.name}"
+            f"postgresql+asyncpg://{self.db.user}:{self.db.password}@{self.db.host}:{self.db.port}/{self.db.name}"
         )
 
     @classmethod

@@ -1,5 +1,15 @@
-from config import settings
+from fastapi import FastAPI, APIRouter
+import uvicorn
 
-print("DB URL =>", settings.get_db_url())
-print("DB HOST =>", settings.DB_HOST)
-print("DB HOST =>", settings.DB_NAME)
+from app.routers.users import router as users_router
+
+app = FastAPI()
+
+main_router = APIRouter(prefix="/api")
+main_router.include_router(users_router)
+
+app.include_router(main_router)
+
+
+if __name__ == "__main__":
+    uvicorn.run(app="main:app", reload=True)
