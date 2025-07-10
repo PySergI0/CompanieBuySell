@@ -4,14 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.database import get_db
 from app.models import User
-from app.schemes import CompanyRead, ContactRead, UserCreate, UserRead
+from app.schemas import CompanyRead, ContactFullResponse, UserCreate, UserResponse
 from app.dao import UserDAO
 from app.security import get_password_hash
 
 router = APIRouter(prefix="/users", tags=["users/"])
 
 
-@router.get("/", summary="Gets all users", response_model=list[UserRead])
+@router.get("/", summary="Gets all users", response_model=list[UserResponse])
 async def get_users(db_session: AsyncSession = Depends(get_db)):
     return await UserDAO.get_all(db_session)
 
@@ -21,26 +21,26 @@ async def get_users_companies(user_id: int, db_session: AsyncSession = Depends(g
     return await UserDAO.get_companies(user_id, db_session)
 
 
-@router.get("/{user_id}/contacts", summary="Gets all user's contacts", response_model=list[ContactRead])
+@router.get("/{user_id}/contacts", summary="Gets all user's contacts", response_model=list[ContactFullResponse])
 async def get_users_contacts(user_id: int, db_session: AsyncSession = Depends(get_db)):
     return await UserDAO.get_contacts(user_id, db_session)
 
 
-@router.get("/{user_id}", summary="Gets detail user's info", response_model=UserRead)
-async def get_users_contacts(user_id: int, db_session: AsyncSession = Depends(get_db)):
+@router.get("/{user_id}", summary="Gets detail user's info", response_model=UserResponse)
+async def get_user_info(user_id: int, db_session: AsyncSession = Depends(get_db)):
     return await UserDAO.get_info(user_id, db_session)
 
 
 @router.post(
-    "/", 
-    summary="Create new user", 
-    response_model=UserRead, 
+    "/",
+    summary="Create new user",
+    response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    )
+)
 async def create_users(user_data: UserCreate, db_session: AsyncSession = Depends(get_db)):
     existing_user = await db_session.execute(
         select(User).where(
-            (User.username == user_data.username) | 
+            (User.username == user_data.username) |
             (User.email == user_data.email)
         )
     )
@@ -55,6 +55,5 @@ async def create_users(user_data: UserCreate, db_session: AsyncSession = Depends
     db_session.add(user_orm)
     await db_session.commit()
     await db_session.refresh(user_orm)
-    
-    return user_orm
 
+    return user_orm

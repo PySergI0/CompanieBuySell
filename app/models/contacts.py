@@ -30,20 +30,18 @@ class Contact(Base):
         "User",
         back_populates="contacts",
         cascade="save-update, merge",
-        lazy="joined",
     )
     company_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("companies.id"))
     company: Mapped[Optional["Company"]] = relationship(
         "Company",
         back_populates="contacts",
-        lazy="joined",
         cascade="save-update, merge",
     )
     comments: Mapped[list["ContactComment"]] = relationship(
         "ContactComment",
         back_populates="contact",
-        lazy="joined",
         cascade="all, delete-orphan",
+        order_by="desc(ContactComment.created_at)",
     )
     
 class ContactComment(BaseComment):
@@ -52,6 +50,5 @@ class ContactComment(BaseComment):
     contact: Mapped["Contact"] = relationship(
         "Contact",
         back_populates="comments",
-        lazy="joined",
         cascade="save-update, merge",
     )

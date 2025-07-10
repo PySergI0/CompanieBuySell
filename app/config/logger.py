@@ -17,7 +17,7 @@ def setup_log(name):
     
     # Обработчик для файла (с ротацией)
     file_handler = RotatingFileHandler(
-        'logs/app.log', maxBytes=1_000_000, backupCount=5, encoding='utf-8'
+        'app/logs/app.log', maxBytes=1_000_000, backupCount=5, encoding='utf-8'
     )
     file_handler.setFormatter(formatter)
     

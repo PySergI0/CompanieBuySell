@@ -42,6 +42,7 @@ class Company(Base):
         back_populates="company",
         lazy="joined",
         cascade="all, delete-orphan",
+        order_by="desc(CompanyComment.created_at)",
     )
 
 
