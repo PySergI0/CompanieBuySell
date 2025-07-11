@@ -17,8 +17,8 @@ UNIQ_STR_AN = Annotated[str, mapped_column(unique=True)]
 
 
 class GenderEnum(str, enum.Enum):
-    MALE = "мужчина"
-    FEMALE = "женщина"
+    MALE = "Мужчина"
+    FEMALE = "Женщина"
 
 
 class UserPostEnum(str, enum.Enum):

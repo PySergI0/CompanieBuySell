@@ -1,13 +1,17 @@
-
 from dataclasses import dataclass
+import re
 from typing import TypeVar
-from sqlalchemy import select
+from pydantic import BaseModel
+from sqlalchemy import select, delete, update
 from sqlalchemy.orm import DeclarativeBase, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.database import Base
 from app.models import User, Company, Contact
 from app.config import setup_log
+from app.schemas import ContactCreate
+from app.security import get_password_hash
 
 
 log = setup_log(__name__)
@@ -56,9 +60,73 @@ class BaseDAO():
         )
         return result.unique().one_or_none()
     
+    @classmethod
+    async def create(cls, data: BaseModel, session_db: AsyncSession):
+        """Created new object in the DB"""
+        try:
+            model = cls.model(**data.model_dump())
+            session_db.add(model)
+            await session_db.commit()
+            await session_db.refresh(model)
+            return model
+        except IntegrityError as e:
+            log.debug(f"Error added {e}")
+            error_msg = str(e.orig)
+            detail_match = re.search(r'DETAIL:\s*(.*)', error_msg)
+            detail = detail_match.group(1) if detail_match else "Неизвестная ошибка уникальности"
+            log.debug(f"Error added object: {detail}")
+            return {
+                "error": "duplicate_key",
+                "message": "Нарушение уникальности данных",
+                "detail": " ".join(detail.split()[:-3])
+            }
+        
+    @classmethod
+    async def delete_record(cls, id: int, session_db: AsyncSession) -> bool:
+        result = await session_db.execute(delete(cls.model).where(cls.model.id == id))
+        await session_db.commit()
+        return result.rowcount > 0
+    
+    @classmethod
+    async def update_record(cls, id: int, data: BaseModel, session_db: AsyncSession):
+        try:
+            result = await session_db.execute(
+                update(cls.model)
+                .where(cls.model.id == id)
+                .values(**data.model_dump())
+                .returning(cls.model))
+            updated_obj = result.scalar_one_or_none()
+            await session_db.commit()
+            return updated_obj
+        except Exception as e:
+            log.error(f"Error updating: {e}")
+            return None
+        
+
 @dataclass
 class UserDAO(BaseDAO):
     model = User
+
+    @classmethod
+    async def create(cls, data: BaseModel, session_db: AsyncSession):
+        try:
+            model = cls.model(**data.model_dump())
+            hashed_password = get_password_hash(data.password)
+            model.hash_password = hashed_password
+            session_db.add(model)
+            await session_db.commit()
+            await session_db.refresh(model)
+            return model
+        except IntegrityError as e:
+            log.debug(f"Error added {e}")
+            error_msg = str(e.orig)
+            detail_match = re.search(r'DETAIL:\s*(.*)', error_msg)
+            detail = detail_match.group(1) if detail_match else "Неизвестная ошибка уникальности"
+            return {
+                "error": "duplicate_key",
+                "message": "Нарушение уникальности данных",
+                "detail": detail
+            }
 
     @classmethod
     async def get_companies(cls, user_id: int, session_db: AsyncSession):
@@ -104,8 +172,8 @@ class ContactDAO(BaseDAO):
             return contact.company
         return None
 
-    @classmethod
-    async def get_info(cls, contact_id: int, session_db: AsyncSession):
-        result = await session_db.scalars(select(Contact).where(Contact.id == contact_id))
+@dataclass
+class CompanyDAO(BaseDAO):
+    model = Company
 
-        return result.unique().one_or_none()
+    

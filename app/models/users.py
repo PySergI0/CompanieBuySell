@@ -14,11 +14,11 @@ class User(Base):
     username: Mapped[UNIQ_STR_AN]
     password: Mapped[str] = mapped_column(String(24))
     hash_password: Mapped[str] = mapped_column(String(100))
-    first_name: Mapped[str] 
-    middle_name: Mapped[Optional[str]] = mapped_column(String(30), default=None)
-    last_name: Mapped[str] 
+    first_name: Mapped[str] = mapped_column(String(30))
+    middle_name: Mapped[Optional[str]] = mapped_column(String(30))
+    last_name: Mapped[str] = mapped_column(String(30))
     gender: Mapped[GenderEnum] = mapped_column(SQLEnum(GenderEnum), name="gender_enum")
-    profession: Mapped[UserPostEnum] = mapped_column(
+    post: Mapped[UserPostEnum] = mapped_column(
         SQLEnum(UserPostEnum, name="user_post_enum"),
         default=UserPostEnum.SALES_MANAGER,
     )

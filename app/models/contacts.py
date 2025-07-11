@@ -13,17 +13,15 @@ class Contact(Base):
     __tablename__ = "contacts"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     first_name: Mapped[str] 
-    middle_name: Mapped[Optional[str]] = mapped_column(String(30), default=None)
-    last_name: Mapped[Optional[str]] = mapped_column(String(30), default=None)
-    email: Mapped[Optional[str]] = mapped_column(String(100), default=None)
+    middle_name: Mapped[Optional[str]] = mapped_column(String(30))
+    last_name: Mapped[Optional[str]] = mapped_column(String(30))
+    email: Mapped[Optional[str]] = mapped_column(String(100), unique=True, index=True)
     phone: Mapped[list[str]] = mapped_column(ARRAY(TEXT), default=list)
     post: Mapped[Optional[CompanyPostEnum]] = mapped_column(
         SQLEnum(CompanyPostEnum, name="company_post_enum"),
-        default=None,
         )
     department: Mapped[Optional[DepartmentEnum]] = mapped_column(
-        SQLEnum(DepartmentEnum, name="department_enum"), 
-        default=None,
+        SQLEnum(DepartmentEnum, name="department_enum"),
     )
     user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"))
     user: Mapped["User"] = relationship(

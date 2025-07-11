@@ -31,21 +31,14 @@ class ContactBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     first_name: str
-    middle_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[EmailStr] = Field(
-        default_factory=list,
-        example=["test@example.com"]
-    )
+    middle_name: Optional[str] = Field(None, description="Middle name (optional)")
+    last_name: Optional[str] = Field(None, description="Last name (optional)")
+    email: Optional[EmailStr] = Field(None, example="test@example.com")
     phone: List[str] = Field(default_factory=list, example=["+79991234567"])
     post: Optional[CompanyPostEnum] = None
     department: Optional[DepartmentEnum] = None
-    user_id: Optional[int] = None
-    company_id: Optional[int] = None
-
-
-
-
+    user_id: Optional[int] = Field(None, gt=0, example=1)
+    company_id: Optional[int] = Field(None, gt=0, example=1)
 
 class ContactCreate(ContactBase):
     pass
@@ -117,7 +110,7 @@ class UserBase(BaseModel):
     middle_name: Optional[str] = None
     last_name: str
     gender: GenderEnum
-    profession: UserPostEnum = UserPostEnum.SALES_MANAGER
+    post: UserPostEnum = UserPostEnum.SALES_MANAGER
     email: EmailStr
 
 
@@ -125,7 +118,15 @@ class UserCreate(UserBase):
     password: str
 
 class UserUpdate(BaseModel):
-    pass
+    username: Optional[str] = Field(None, min_length=2, max_length=30, example="Ibra")
+    first_name: Optional[str] = Field(None, min_length=2, max_length=30, example="Иван")
+    middle_name: Optional[str] = Field(None, min_length=2, max_length=30, example="Олегович")
+    last_name: Optional[str] = Field(None, min_length=2, max_length=30, example="Ibra")
+    gender: Optional[GenderEnum] = Field(None, example="Мужчина")
+    post: Optional[UserPostEnum] = Field(None, example="Менеджер по продажам")
+    email: Optional[EmailStr] = Field(None, example="contact@example.com")
+    password: Optional[str] = Field(None, example="Password")
+
 
 class UserResponse(UserBase):
     """Response schema without relations"""
@@ -139,6 +140,7 @@ class UserFullResponse(UserResponse):
 
 
 class CompanyBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     inn: str = Field(..., min_length=8, max_length=12, example="12345678")
     name: str = Field(..., max_length=128, example="ООО Рога и Копыта")
     email: List[EmailStr] = Field(
@@ -181,13 +183,12 @@ class CompanyUpdate(BaseModel):
 
 class CompanyRead(CompanyBase):
     id: int
-    user: Optional["UserResponse"] = None
     created_at: datetime
     updated_at: datetime
+
+class CompanyFullRead(CompanyRead):
+    user: Optional["UserResponse"] = None
     comments: List["CompanyCommentRead"] = Field(default_factory=list)
-
-    model_config = ConfigDict(from_attributes=True)
-
 
 
 class CompanyCommentCreate(BaseModel):
