@@ -3,14 +3,13 @@ import re
 from typing import TypeVar
 from pydantic import BaseModel
 from sqlalchemy import select, delete, update
-from sqlalchemy.orm import DeclarativeBase, selectinload
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from app.database import Base
 from app.models import User, Company, Contact
 from app.config import setup_log
-from app.schemas import ContactCreate
 from app.security import get_password_hash
 
 
@@ -26,7 +25,7 @@ class BaseDAO():
         Args:
             model: (DeclarativeBase): SQLalchemy model. Default = None
     """
-    model: DeclarativeBase = None
+    model: Base = None
 
     @classmethod
     async def get_all(cls, session_db: AsyncSession) -> list[T]:
@@ -61,7 +60,7 @@ class BaseDAO():
         return result.unique().one_or_none()
     
     @classmethod
-    async def create(cls, data: BaseModel, session_db: AsyncSession):
+    async def create_new_record(cls, data: BaseModel, session_db: AsyncSession):
         """Created new object in the DB"""
         try:
             model = cls.model(**data.model_dump())
@@ -89,14 +88,16 @@ class BaseDAO():
     
     @classmethod
     async def update_record(cls, id: int, data: BaseModel, session_db: AsyncSession):
+        update_values = {k: v for k, v in data.model_dump().items() if v is not None}
         try:
-            result = await session_db.execute(
+            await session_db.execute(
                 update(cls.model)
                 .where(cls.model.id == id)
-                .values(**data.model_dump())
-                .returning(cls.model))
-            updated_obj = result.scalar_one_or_none()
+                .values(update_values)
+            )
+            updated_obj = await session_db.get(cls.model, id)
             await session_db.commit()
+            log.debug(f"Updating {cls.__name__} id={id} with values: {update_values}")
             return updated_obj
         except Exception as e:
             log.error(f"Error updating: {e}")
@@ -108,7 +109,7 @@ class UserDAO(BaseDAO):
     model = User
 
     @classmethod
-    async def create(cls, data: BaseModel, session_db: AsyncSession):
+    async def create_new_record(cls, data: BaseModel, session_db: AsyncSession):
         try:
             model = cls.model(**data.model_dump())
             hashed_password = get_password_hash(data.password)
@@ -138,10 +139,10 @@ class UserDAO(BaseDAO):
         result = await session_db.scalars(select(Contact).where(Contact.user_id == user_id))
         return result.unique().all()
 
-    @classmethod
-    async def get_info(cls, user_id: int, session_db: AsyncSession):
-        result = await session_db.scalars(select(User).where(User.id == user_id))
-        return result.unique().one_or_none()
+    # @classmethod
+    # async def get_info(cls, user_id: int, session_db: AsyncSession):
+    #     result = await session_db.scalars(select(User).where(User.id == user_id))
+    #     return result.unique().one_or_none()
 
 
 @dataclass
@@ -176,4 +177,3 @@ class ContactDAO(BaseDAO):
 class CompanyDAO(BaseDAO):
     model = Company
 
-    

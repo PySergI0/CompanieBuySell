@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.database import get_db
 from app.models import Contact
-from app.schemas import CompanyRead, ContactCreate, ContactFullResponse, ContactUpdate, UserCreate, UserFullResponse, UserResponse, ContactResponse
+from app.schemas import CompanyResponse, ContactCreate, ContactFullResponse, ContactUpdate, UserCreate, UserFullResponse, UserResponse, ContactResponse
 from app.dao import ContactDAO
 
 
@@ -31,7 +31,7 @@ async def get_contact_detail(contact_id: int, db_session: AsyncSession = Depends
         response_model=ContactResponse,
     )
 async def create_contact(contact_data: ContactCreate, db: AsyncSession = Depends(get_db)):
-    result = await ContactDAO.create(contact_data, db)
+    result = await ContactDAO.create_new_record(contact_data, db)
     if isinstance(result, Contact):
         return result
     else:

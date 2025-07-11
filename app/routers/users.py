@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.exceptions import ResponseValidationError
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.database import get_db
 from app.models import User
-from app.schemas import CompanyRead, ContactFullResponse, UserCreate, UserResponse, UserUpdate
+from app.schemas import UserCreate, UserFullResponse, UserResponse, UserUpdate
 from app.dao import UserDAO
-from app.security import get_password_hash
+
 
 router = APIRouter(prefix="/users", tags=["users/"])
 
@@ -17,11 +15,11 @@ async def get_users(db_session: AsyncSession = Depends(get_db)):
     return await UserDAO.get_all(db_session)
 
 
-@router.get("/{user_id}", summary="Gets detail user's info", response_model=UserResponse)
+@router.get("/{user_id}", summary="Gets detail user's info", response_model=UserFullResponse)
 async def get_user_info(user_id: int, db_session: AsyncSession = Depends(get_db)):
     user = await UserDAO.get_details(user_id, db_session)
     if user:
-        return User
+        return user
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"User with ID {user_id} not found"
@@ -35,7 +33,7 @@ async def get_user_info(user_id: int, db_session: AsyncSession = Depends(get_db)
     status_code=status.HTTP_201_CREATED,
 )
 async def create_users(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    result = await UserDAO.create(user_data, db)
+    result = await UserDAO.create_new_record(user_data, db)
     if isinstance(result, User):
         return result
     else:

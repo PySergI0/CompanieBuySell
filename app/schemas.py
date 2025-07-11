@@ -1,7 +1,7 @@
 __all__ = [
     "CompanyCreate",
     "CompanyUpdate",
-    "CompanyRead",
+    "CompanyResponse",
     "CompanyCommentCreate",
     "CompanyCommentUpdate",
     "CompanyCommentRead",
@@ -23,7 +23,7 @@ from app.constants import AreaActivityEnum, CompanyPostEnum, DepartmentEnum, Gen
 
 
 CompanyCommentRead = ForwardRef("CompanyCommentRead")
-CompanyRead = ForwardRef("CompanyRead")
+CompanyResponse = ForwardRef("CompanyRead")
 ContactCommentRead = ForwardRef("ContactCommentRead")
 
 
@@ -79,7 +79,7 @@ class ContactResponse(ContactBase):
 class ContactFullResponse(ContactResponse):
     """Response full schema with relations"""
     user: Optional["UserResponse"] = None
-    company: Optional["CompanyRead"] = None
+    company: Optional["CompanyResponse"] = None
     comments: List["ContactCommentRead"] = []
 
 
@@ -135,20 +135,19 @@ class UserResponse(UserBase):
 
 class UserFullResponse(UserResponse):
     """Response full schema with relations"""
-    contacts: List["ContactResponse"] = []
-    # companies: 
+    contacts: List["ContactResponse"] = Field(default_factory=list)
+    companies: List["CompanyResponse"] = Field(default_factory=list)
 
 
 class CompanyBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     inn: str = Field(..., min_length=8, max_length=12, example="12345678")
     name: str = Field(..., max_length=128, example="ООО Рога и Копыта")
-    email: List[EmailStr] = Field(
-        default_factory=list, example=["test@example.com"])
+    email: List[EmailStr] = Field(default_factory=list, example=["test@example.com"])
     phone: List[str] = Field(default_factory=list, example=["+79991234567"])
-    revenue: Optional[int] = None
-    area_activity: Optional[List[AreaActivityEnum]] = None
-    user_id: Optional[int] = None
+    revenue: Optional[int] = Field(None, example=456854)
+    area_activity: Optional[List[AreaActivityEnum]] = Field(default_factory=list, example="")
+    user_id: Optional[int] = Field(None, gt=0, example=1)
 
 
 class CompanyCreate(CompanyBase):
@@ -167,26 +166,26 @@ class CompanyUpdate(BaseModel):
         None, max_length=128, example="ООО Рога и Копыта")
     email: Optional[List[EmailStr]] = Field(None, example=["info@company.com"])
     phone: Optional[List[str]] = Field(None, example=["+79991234567"])
-    revenue: Optional[int] = None
-    area_activity: Optional[List[AreaActivityEnum]] = None
-    user_id: Optional[int] = Field(None, example=1)
+    revenue: Optional[int] = Field(None, example=["+79991234567", "+79899006751"])
+    area_activity: Optional[List[AreaActivityEnum]] = Field(None, example="")
+    user_id: Optional[int] = Field(None, gt=1, example=1)
 
     class Config:
         json_schema_extra = {
             "example": {
                 "name": "Новое название компании",
+                "email": ["example@mail.ru"],
                 "phone": ["+79998887766"],
-                "area_activity": ["IT"]
             }
         }
 
 
-class CompanyRead(CompanyBase):
+class CompanyResponse(CompanyBase):
     id: int
     created_at: datetime
     updated_at: datetime
 
-class CompanyFullRead(CompanyRead):
+class CompanyFullResponse(CompanyResponse):
     user: Optional["UserResponse"] = None
     comments: List["CompanyCommentRead"] = Field(default_factory=list)
 
@@ -204,7 +203,7 @@ class CompanyCommentRead(BaseModel):
     id: int
     text: str
     company_id: int
-    company: Optional["CompanyRead"] = None
+    company: Optional["CompanyResponse"] = None
     created_at: datetime
     updated_at: datetime
 
@@ -212,5 +211,5 @@ class CompanyCommentRead(BaseModel):
 
 
 CompanyCommentRead.model_rebuild()
-CompanyRead.model_rebuild()
+CompanyResponse.model_rebuild()
 ContactCommentRead.model_rebuild()

@@ -13,7 +13,7 @@ from app.database import Base, BaseComment
 class Company(Base):
     __tablename__ = "companies"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    inn: Mapped[str] = mapped_column(String(12))
+    inn: Mapped[str] = mapped_column(String(12), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(128))
     email: Mapped[list[str]] = mapped_column(ARRAY(TEXT), default=list)
     phone: Mapped[list[str]] = mapped_column(ARRAY(TEXT), default=list)
