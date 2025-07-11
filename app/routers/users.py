@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.database import get_db
 from app.models import User
 from app.schemas import UserCreate, UserFullResponse, UserResponse, UserUpdate
-from app.dao import UserDAO
+from app.database.dao import UserDAO
 
 
 router = APIRouter(prefix="/users", tags=["users/"])

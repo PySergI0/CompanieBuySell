@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from app.database import Base
 from app.models import User, Company, Contact
 from app.config import setup_log
-from app.security import get_password_hash
+from app.core.security import get_password_hash
 
 
 log = setup_log(__name__)

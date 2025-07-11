@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import Company
 from app.schemas import CompanyFullResponse, CompanyResponse, CompanyCreate, CompanyUpdate
-from app.dao import CompanyDAO
+from app.database.dao import CompanyDAO
 
 router = APIRouter(prefix="/companies", tags=["companies/"])
 

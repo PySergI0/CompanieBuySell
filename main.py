@@ -1,7 +1,5 @@
-from fastapi import FastAPI, APIRouter, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 import uvicorn
+from fastapi import FastAPI, APIRouter
 
 from app.routers import (companies_router, contacts_router, users_router)
 

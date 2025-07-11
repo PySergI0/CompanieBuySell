@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.database import get_db
 from app.models import Contact
 from app.schemas import CompanyResponse, ContactCreate, ContactFullResponse, ContactUpdate, UserCreate, UserFullResponse, UserResponse, ContactResponse
-from app.dao import ContactDAO
+from app.database.dao import ContactDAO
 
 
 router = APIRouter(prefix="/contacts", tags=["contacts/"])
