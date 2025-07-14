@@ -22,26 +22,24 @@ class Company(Base):
         ARRAY(SQLEnum(AreaActivityEnum, name="area_activity_enum")),
         default=None,
     )
-
     user_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("users.id"))
+        Integer,
+        ForeignKey(
+            "users.id",
+            ondelete="SET NULL",
+        ),
+    )
     user: Mapped["User"] = relationship(
         "User",
         back_populates="companies",
-        cascade="save-update, merge",
-        lazy="joined"
     )
     contacts: Mapped[list["Contact"]] = relationship(
         "Contact",
         back_populates="company",
-        lazy="joined",
-        cascade="save-update, merge",
     )
     comments: Mapped[list["CompanyComment"]] = relationship(
         "CompanyComment",
         back_populates="company",
-        lazy="joined",
-        cascade="all, delete-orphan",
         order_by="desc(CompanyComment.created_at)",
     )
 
@@ -49,10 +47,13 @@ class Company(Base):
 class CompanyComment(BaseComment):
     __tablename__ = "company_comments"
     company_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("companies.id"))
+        Integer, 
+        ForeignKey(
+            "companies.id",
+            ondelete="CASCADE",
+        ),
+    )
     company: Mapped["Company"] = relationship(
         "Company",
         back_populates="comments",
-        lazy="joined",
-        cascade="save-update, merge",
     )

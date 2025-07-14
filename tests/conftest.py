@@ -1,45 +1,48 @@
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from alembic.config import Config
-from alembic import command
 
 from main import app
 from app.database import Base, get_db
 
-TEST_DATABASE_URL = "sqlite:///./test.db"
+# Настройка тестовой SQLite базы данных в памяти (опционально, если хотите реальную БД для некоторых тестов)
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@pytest.fixture(scope="session")
-def apply_migrations():
-    alembic_cfg = Config("alembic.ini")
-    alembic_cfg.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
-    command.upgrade(alembic_cfg, "head")
-    yield
-    command.downgrade(alembic_cfg, "base")
+# Фикстура для создания тестовой БД (если нужно)
+@pytest.fixture(scope="function")
+def db_session():
+    # Создаем все таблицы
+    Base.metadata.create_all(bind=engine)
+    
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=engine)
 
-@pytest.fixture
-def db_session(apply_migrations):
-    engine = create_engine(TEST_DATABASE_URL)
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = sessionmaker(autocommit=False, autoflush=False, bind=connection)()
-    
-    yield session
-    
-    session.close()
-    transaction.rollback()
-    connection.close()
+# Фикстура для мока базы данных
+@pytest.fixture(scope="function")
+def mock_db():
+    with patch('database.get_db') as mock:
+        mock_db = MagicMock()
+        mock.return_value = mock_db
+        yield mock_db
 
-@pytest.fixture
-def client(db_session):
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            db_session.close()
-    
-    app.dependency_overrides[get_db] = override_get_db
+# Фикстура для тестового клиента
+@pytest.fixture(scope="module")
+def test_client():
     with TestClient(app) as client:
         yield client
-    del app.dependency_overrides[get_db]
+
+# Фикстура для авторизованного клиента (если нужно)
+@pytest.fixture(scope="function")
+def authorized_client(test_client, mock_db):
+    # Здесь можно добавить логику аутентификации
+    # Например, мокировать токен или JWT
+    test_client.headers.update({"Authorization": "Bearer mocktoken"})
+    return test_client

@@ -1,6 +1,6 @@
 __all__ = ["config"]
 
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,8 +17,7 @@ class DatabaseConfig(BaseConfig):
     name: str
     port: str
 
-    class Config:
-        env_prefix = "DB_"
+    model_config = ConfigDict(env_prefix="DB_")
 
 
 class Config(BaseSettings):

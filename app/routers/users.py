@@ -41,13 +41,14 @@ async def create_users(user_data: UserCreate, db: AsyncSession = Depends(get_db)
             status_code=status.HTTP_409_CONFLICT,
             detail=result
         )
-    
+
+
 @router.patch(
-        "/{user_id}", 
-        summary="Update user", 
-        status_code=status.HTTP_200_OK, 
-        response_model=UserResponse
-    )
+    "/{user_id}",
+    summary="Update user",
+    status_code=status.HTTP_200_OK,
+    response_model=UserResponse
+)
 async def update_user(user_id: int, data: UserUpdate, db: AsyncSession = Depends(get_db)):
     result = await UserDAO.update_record(user_id, data, db)
     if result:
@@ -57,6 +58,7 @@ async def update_user(user_id: int, data: UserUpdate, db: AsyncSession = Depends
         detail="Error"
     )
 
+
 @router.delete("/{user_id}", summary="Delete user", status_code=status.HTTP_200_OK)
 async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     result = await UserDAO.delete_record(user_id, db)
@@ -65,7 +67,7 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"User with id {user_id} not found",
-    ) 
+    )
 
 
 # @router.get("/{user_id}/companies", summary="Gets all user's companies", response_model=list[CompanyRead])
