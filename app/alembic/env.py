@@ -8,11 +8,12 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 
 from app.database import Base, DB_URL
+from app.config import setup_log
 from app.models.contacts import Contact, ContactComment
 from app.models.companies import Company, CompanyComment
 from app.models.users import User
 
-
+log = setup_log(__name__)
 config = context.config
 
 if config.config_file_name is not None:
@@ -72,8 +73,15 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    asyncio.run(run_async_migrations())
-
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        asyncio.run(run_async_migrations())
+    else:
+        if loop.is_running():
+            loop.create_task(run_async_migrations())
+        else:
+            loop.run_until_complete(run_async_migrations())
 
 if context.is_offline_mode():
     run_migrations_offline()
